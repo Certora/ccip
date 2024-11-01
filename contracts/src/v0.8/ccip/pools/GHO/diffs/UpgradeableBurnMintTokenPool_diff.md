@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index c48c8e51fb..df35f45684 100644
+index c48c8e51fb..007f9e4f14 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
 @@ -1,29 +1,56 @@
@@ -35,7 +35,7 @@ index c48c8e51fb..df35f45684 100644
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Inclusion of rate limit admin who may configure rate limits in addition to owner
-+contract UpgradeableBurnMintTokenPool is UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion, Initializable {
++contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
    string public constant override typeAndVersion = "BurnMintTokenPool 1.5.0";
 
 +  /// @dev Constructor
@@ -43,16 +43,18 @@ index c48c8e51fb..df35f45684 100644
 +  /// @param rmnProxy The address of the arm proxy
 +  /// @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
    constructor(
-     IBurnMintERC20 token,
+-    IBurnMintERC20 token,
 -    address[] memory allowlist,
++    address token,
      address rmnProxy,
 -    address router
 -  ) TokenPool(token, allowlist, rmnProxy, router) {}
 +    bool allowlistEnabled
-+  ) UpgradeableTokenPool(token, rmnProxy, allowlistEnabled) {
++  ) UpgradeableTokenPool(IBurnMintERC20(token), rmnProxy, allowlistEnabled) {
 +    _disableInitializers();
 +  }
-+
+
+-  /// @inheritdoc BurnMintTokenPoolAbstract
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner_` must accept ownership after initialization.
 +  /// @dev The `allowlist` is only effective if pool is set to access-controlled mode
@@ -70,8 +72,7 @@ index c48c8e51fb..df35f45684 100644
 +      _applyAllowListUpdates(new address[](0), allowlist);
 +    }
 +  }
-
--  /// @inheritdoc BurnMintTokenPoolAbstract
++
 +  /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract
    function _burn(uint256 amount) internal virtual override {
      IBurnMintERC20(address(i_token)).burn(amount);

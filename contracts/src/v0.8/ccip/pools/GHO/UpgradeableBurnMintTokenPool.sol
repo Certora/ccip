@@ -17,7 +17,7 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Inclusion of rate limit admin who may configure rate limits in addition to owner
-contract UpgradeableBurnMintTokenPool is UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion, Initializable {
+contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
   string public constant override typeAndVersion = "BurnMintTokenPool 1.5.0";
 
   /// @dev Constructor
@@ -25,10 +25,10 @@ contract UpgradeableBurnMintTokenPool is UpgradeableBurnMintTokenPoolAbstract, I
   /// @param rmnProxy The address of the arm proxy
   /// @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
   constructor(
-    IBurnMintERC20 token,
+    address token,
     address rmnProxy,
     bool allowlistEnabled
-  ) UpgradeableTokenPool(token, rmnProxy, allowlistEnabled) {
+  ) UpgradeableTokenPool(IBurnMintERC20(token), rmnProxy, allowlistEnabled) {
     _disableInitializers();
   }
 

@@ -20,7 +20,7 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
-contract UpgradeableLockReleaseTokenPool is UpgradeableTokenPool, ILiquidityContainer, ITypeAndVersion, Initializable {
+contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool, ILiquidityContainer, ITypeAndVersion {
   using SafeERC20 for IERC20;
 
   error InsufficientLiquidity();
@@ -58,14 +58,12 @@ contract UpgradeableLockReleaseTokenPool is UpgradeableTokenPool, ILiquidityCont
   //   / @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
   //   / @param acceptLiquidity True if the pool accepts liquidity, false otherwise
   constructor(
-    IERC20 token,
+    address token,
     address rmnProxy,
     bool allowListEnabled,
     bool acceptLiquidity
-  ) UpgradeableTokenPool(token, rmnProxy, allowListEnabled) {
+  ) UpgradeableTokenPool(IERC20(token), rmnProxy, allowListEnabled) {
     i_acceptLiquidity = acceptLiquidity;
-
-    _disableInitializers();
   }
 
   /// @dev Initializer
@@ -96,7 +94,6 @@ contract UpgradeableLockReleaseTokenPool is UpgradeableTokenPool, ILiquidityCont
   ) external virtual override returns (Pool.LockOrBurnOutV1 memory) {
     // Increase bridged amount because tokens are leaving the source chain
     if ((s_currentBridged += lockOrBurnIn.amount) > s_bridgeLimit) revert BridgeLimitExceeded(s_bridgeLimit);
-
     _validateLockOrBurn(lockOrBurnIn);
 
     emit Locked(msg.sender, lockOrBurnIn.amount);
@@ -109,12 +106,12 @@ contract UpgradeableLockReleaseTokenPool is UpgradeableTokenPool, ILiquidityCont
   function releaseOrMint(
     Pool.ReleaseOrMintInV1 calldata releaseOrMintIn
   ) external virtual override returns (Pool.ReleaseOrMintOutV1 memory) {
+    _validateReleaseOrMint(releaseOrMintIn);
+
     // This should never occur. Amount should never exceed the current bridged amount
     if (releaseOrMintIn.amount > s_currentBridged) revert NotEnoughBridgedAmount();
     // Reduce bridged amount because tokens are back to source chain
     s_currentBridged -= releaseOrMintIn.amount;
-
-    _validateReleaseOrMint(releaseOrMintIn);
 
     // Release to the recipient
     getToken().safeTransfer(releaseOrMintIn.receiver, releaseOrMintIn.amount);

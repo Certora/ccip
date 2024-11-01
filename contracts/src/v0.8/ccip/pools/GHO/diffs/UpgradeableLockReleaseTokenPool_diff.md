@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index 3a4a4aef6d..70adc38030 100644
+index 3a4a4aef6d..6165ea6bc0 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
 @@ -1,24 +1,35 @@
@@ -38,7 +38,7 @@ index 3a4a4aef6d..70adc38030 100644
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
-+contract UpgradeableLockReleaseTokenPool is UpgradeableTokenPool, ILiquidityContainer, ITypeAndVersion, Initializable {
++contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool, ILiquidityContainer, ITypeAndVersion {
    using SafeERC20 for IERC20;
 
    error InsufficientLiquidity();
@@ -51,7 +51,7 @@ index 3a4a4aef6d..70adc38030 100644
 
    event LiquidityTransferred(address indexed from, uint256 amount);
 
-@@ -32,14 +43,50 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -32,21 +43,57 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @notice The address of the rebalancer.
    address internal s_rebalancer;
 
@@ -70,20 +70,19 @@ index 3a4a4aef6d..70adc38030 100644
 +  //   / @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
 +  //   / @param acceptLiquidity True if the pool accepts liquidity, false otherwise
    constructor(
-     IERC20 token,
+-    IERC20 token,
 -    address[] memory allowlist,
++    address token,
      address rmnProxy,
 -    bool acceptLiquidity,
 -    address router
 -  ) TokenPool(token, allowlist, rmnProxy, router) {
 +    bool allowListEnabled,
 +    bool acceptLiquidity
-+  ) UpgradeableTokenPool(token, rmnProxy, allowListEnabled) {
++  ) UpgradeableTokenPool(IERC20(token), rmnProxy, allowListEnabled) {
      i_acceptLiquidity = acceptLiquidity;
-+
-+    _disableInitializers();
-+  }
-+
+   }
+
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner_` must accept ownership after initialization.
 +  /// @dev The `allowlist` is only effective if pool is set to access-controlled mode
@@ -103,32 +102,31 @@ index 3a4a4aef6d..70adc38030 100644
 +    s_router = IRouter(router);
 +    if (i_allowlistEnabled) _applyAllowListUpdates(new address[](0), allowlist);
 +    s_bridgeLimit = bridgeLimit;
-   }
-
++  }
++
    /// @notice Locks the token in the pool
-@@ -47,6 +94,9 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+   /// @dev The _validateLockOrBurn check is an essential security check
    function lockOrBurn(
      Pool.LockOrBurnInV1 calldata lockOrBurnIn
    ) external virtual override returns (Pool.LockOrBurnOutV1 memory) {
 +    // Increase bridged amount because tokens are leaving the source chain
 +    if ((s_currentBridged += lockOrBurnIn.amount) > s_bridgeLimit) revert BridgeLimitExceeded(s_bridgeLimit);
-+
      _validateLockOrBurn(lockOrBurnIn);
 
      emit Locked(msg.sender, lockOrBurnIn.amount);
-@@ -59,6 +109,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
-   function releaseOrMint(
-     Pool.ReleaseOrMintInV1 calldata releaseOrMintIn
+@@ -61,6 +108,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    ) external virtual override returns (Pool.ReleaseOrMintOutV1 memory) {
+     _validateReleaseOrMint(releaseOrMintIn);
+
 +    // This should never occur. Amount should never exceed the current bridged amount
 +    if (releaseOrMintIn.amount > s_currentBridged) revert NotEnoughBridgedAmount();
 +    // Reduce bridged amount because tokens are back to source chain
 +    s_currentBridged -= releaseOrMintIn.amount;
 +
-     _validateReleaseOrMint(releaseOrMintIn);
-
      // Release to the recipient
-@@ -69,6 +124,38 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+     getToken().safeTransfer(releaseOrMintIn.receiver, releaseOrMintIn.amount);
+
+@@ -69,6 +121,38 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      return Pool.ReleaseOrMintOutV1({destinationAmount: releaseOrMintIn.amount});
    }
 
@@ -167,7 +165,7 @@ index 3a4a4aef6d..70adc38030 100644
    // @inheritdoc IERC165
    function supportsInterface(bytes4 interfaceId) public pure virtual override returns (bool) {
      return interfaceId == type(ILiquidityContainer).interfaceId || super.supportsInterface(interfaceId);
-@@ -80,6 +167,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -80,6 +164,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      return s_rebalancer;
    }
 
@@ -179,7 +177,7 @@ index 3a4a4aef6d..70adc38030 100644
    /// @notice Sets the LiquidityManager address.
    /// @dev Only callable by the owner.
    function setRebalancer(address rebalancer) external onlyOwner {
-@@ -124,7 +216,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -124,7 +213,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @param from The address of the old pool.
    /// @param amount The amount of liquidity to transfer.
    function transferLiquidity(address from, uint256 amount) external onlyOwner {
