@@ -85,7 +85,7 @@ rule only_lockOrBurn_can_increase_currentBridged(env e) {
 
   assert 
     curr_bridge_after > curr_bridge_before =>
-    f.selector==sig:lockOrBurn(tuple(bytes calldata,uint64,address,uint256,address)).selector;
+    f.selector==sig:lockOrBurn((bytes calldata,uint64,address,uint256,address)).selector;
 }
 
 
@@ -102,7 +102,7 @@ rule only_releaseOrMint_can_decrease_currentBridged(env e) {
 
   assert 
     curr_bridge_after < curr_bridge_before =>
-    f.selector==sig:releaseOrMint(tuple(bytes calldata,uint64,address,uint256,address,bytes calldata,bytes calldata,bytes calldata)).selector;
+    f.selector==sig:releaseOrMint((bytes calldata,uint64,address,uint256,address,bytes calldata,bytes calldata,bytes calldata)).selector;
 }
 
 
