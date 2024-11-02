@@ -1,4 +1,5 @@
 @aave/=foundry-lib/gho-core/lib/aave-token/
+@aave-gho-core/=foundry-lib/gho-core/src/contracts/
 @aave/core-v3/=foundry-lib/gho-core/lib/aave-v3-core/
 @aave/periphery-v3/=foundry-lib/gho-core/lib/aave-v3-periphery/
 @arbitrum/=node_modules/@arbitrum/
