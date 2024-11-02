@@ -25,6 +25,7 @@ contract GhoTokenPoolHandler is GhoBaseTest {
     vm.mockCall(ROUTER, abi.encodeWithSelector(bytes4(keccak256("getOnRamp(uint64)"))), abi.encode(RAMP));
     vm.mockCall(ROUTER, abi.encodeWithSelector(bytes4(keccak256("isOffRamp(uint64,address)"))), abi.encode(true));
     vm.mockCall(RMN_PROXY, abi.encodeWithSelector(bytes4(keccak256("isCursed()"))), abi.encode(false));
+    vm.mockCall(RMN_PROXY, abi.encodeWithSelector(bytes4(keccak256("isCursed(bytes16)"))), abi.encode(false));
 
     // Arbitrum
     _addBridge(s, 1, INITIAL_BRIDGE_LIMIT);
