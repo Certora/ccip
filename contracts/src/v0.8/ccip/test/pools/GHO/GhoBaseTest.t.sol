@@ -208,7 +208,7 @@ abstract contract GhoBaseTest is BaseTest {
       UpgradeableLockReleaseTokenPool ethTokenPool = UpgradeableLockReleaseTokenPool(s.pools[0]);
       uint256 bridgeLimit = ethTokenPool.getBridgeLimit();
       uint256 currentBridged = ethTokenPool.getCurrentBridgedAmount();
-      return currentBridged > bridgeLimit ? 0 : bridgeLimit - currentBridged;
+      return currentBridged >= bridgeLimit ? 0 : bridgeLimit - currentBridged;
     } else {
       (, uint256 level) = GhoToken(s.tokens[fromChain]).getFacilitatorBucket(s.pools[fromChain]);
       return level;
@@ -221,7 +221,7 @@ abstract contract GhoBaseTest is BaseTest {
       return ethTokenPool.getCurrentBridgedAmount();
     } else {
       (uint256 capacity, uint256 level) = GhoToken(s.tokens[toChain]).getFacilitatorBucket(s.pools[toChain]);
-      return level > capacity ? 0 : capacity - level;
+      return level >= capacity ? 0 : capacity - level;
     }
   }
 

@@ -52,11 +52,11 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @dev Can be address(0) if none is configured.
   address internal s_bridgeLimitAdmin;
 
-  /// @dev Constructor
-  /// @param token The bridgeable token that is managed by this pool.
-  /// @param rmnProxy The address of the rmn proxy
-  /// @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
-  /// @param acceptLiquidity True if the pool accepts liquidity, false otherwise
+  // @dev Constructor
+  // @param token The bridgeable token that is managed by this pool.
+  // @param rmnProxy The address of the rmn proxy
+  // @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
+  // @param acceptLiquidity True if the pool accepts liquidity, false otherwise
   constructor(
     address token,
     address rmnProxy,
