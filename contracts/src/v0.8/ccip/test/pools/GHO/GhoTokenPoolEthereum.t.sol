@@ -2,18 +2,17 @@
 pragma solidity ^0.8.0;
 
 import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol";
-
 import {stdError} from "forge-std/Test.sol";
-import {MockUpgradeable} from "../../mocks/MockUpgradeable.sol";
-import {IPoolV1} from "../../../interfaces/IPool.sol";
+import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 import {ILiquidityContainer} from "../../../../liquiditymanager/interfaces/ILiquidityContainer.sol";
+import {IPoolV1} from "../../../interfaces/IPool.sol";
 import {Pool} from "../../../libraries/Pool.sol";
 import {LockReleaseTokenPool} from "../../../pools/LockReleaseTokenPool.sol";
 import {UpgradeableLockReleaseTokenPool} from "../../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
 import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
-import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
+import {MockUpgradeable} from "../../mocks/MockUpgradeable.sol";
 import {GhoTokenPoolEthereumSetup} from "./GhoTokenPoolEthereumSetup.t.sol";
 
 contract GhoTokenPoolEthereum_setRebalancer is GhoTokenPoolEthereumSetup {
@@ -374,7 +373,7 @@ contract GhoTokenPoolEthereum_releaseOrMint is GhoTokenPoolEthereumSetup {
     );
   }
 
-  function testBridgedAmountNoEnoughReverts() public {
+  function testBridgedAmountNotEnoughReverts() public {
     uint256 amount = 10;
     vm.expectRevert(abi.encodeWithSelector(UpgradeableLockReleaseTokenPool.NotEnoughBridgedAmount.selector));
     vm.startPrank(s_allowedOffRamp);

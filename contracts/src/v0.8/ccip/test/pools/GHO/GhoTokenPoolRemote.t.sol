@@ -5,13 +5,14 @@ import {GhoToken} from "@aave-gho-core/gho/GhoToken.sol";
 import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol";
 
 import {stdError} from "forge-std/Test.sol";
-import {MockUpgradeable} from "../../mocks/MockUpgradeable.sol";
 import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {EVM2EVMOnRamp} from "../../../onRamp/EVM2EVMOnRamp.sol";
 import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
 import {BurnMintTokenPool} from "../../../pools/BurnMintTokenPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 import {Pool} from "../../../libraries/Pool.sol";
+import {MockUpgradeable} from "../../mocks/MockUpgradeable.sol";
+
 import {GhoTokenPoolRemoteSetup} from "./GhoTokenPoolRemoteSetup.t.sol";
 
 contract GhoTokenPoolRemote_lockOrBurn is GhoTokenPoolRemoteSetup {
