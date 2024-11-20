@@ -22,7 +22,7 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
 
   /// @dev Constructor
   /// @param token The bridgeable token that is managed by this pool.
-  /// @param rmnProxy The address of the arm proxy
+  /// @param rmnProxy The address of the rmn proxy
   /// @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
   constructor(
     address token,

@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index 3a4a4aef6d..6165ea6bc0 100644
+index 3a4a4aef6d..b714fc2342 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
 @@ -1,24 +1,35 @@
@@ -64,11 +64,11 @@ index 3a4a4aef6d..6165ea6bc0 100644
 +  /// @dev Can be address(0) if none is configured.
 +  address internal s_bridgeLimitAdmin;
 +
-+  //   / @dev Constructor
-+  //   / @param token The bridgeable token that is managed by this pool.
-+  //   / @param rmnProxy The address of the rmn proxy
-+  //   / @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
-+  //   / @param acceptLiquidity True if the pool accepts liquidity, false otherwise
++  /// @dev Constructor
++  /// @param token The bridgeable token that is managed by this pool.
++  /// @param rmnProxy The address of the rmn proxy
++  /// @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
++  /// @param acceptLiquidity True if the pool accepts liquidity, false otherwise
    constructor(
 -    IERC20 token,
 -    address[] memory allowlist,

@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index c48c8e51fb..007f9e4f14 100644
+index c48c8e51fb..287cb13e9c 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
 @@ -1,29 +1,56 @@
@@ -40,7 +40,7 @@ index c48c8e51fb..007f9e4f14 100644
 
 +  /// @dev Constructor
 +  /// @param token The bridgeable token that is managed by this pool.
-+  /// @param rmnProxy The address of the arm proxy
++  /// @param rmnProxy The address of the rmn proxy
 +  /// @param allowlistEnabled True if pool is set to access-controlled mode, false otherwise
    constructor(
 -    IBurnMintERC20 token,
