@@ -17,7 +17,6 @@ import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 /// @dev Contract adaptations:
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
-/// - Inclusion of rate limit admin who may configure rate limits in addition to owner
 
 /// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
 /// It either accepts any address as originalSender, or only accepts whitelisted originalSender.

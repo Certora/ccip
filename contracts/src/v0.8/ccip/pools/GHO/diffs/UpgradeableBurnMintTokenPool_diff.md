@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 30203a4ced..ce48be0d31 100644
+index 30203a4ced..5ef834d1d2 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,33 +1,49 @@
+@@ -1,33 +1,48 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
@@ -28,7 +28,6 @@ index 30203a4ced..ce48be0d31 100644
 +/// @dev Contract adaptations:
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
-+/// - Inclusion of rate limit admin who may configure rate limits in addition to owner
 
 -/// @notice This pool mints and burns a 3rd-party token.
  /// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
