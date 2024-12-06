@@ -384,7 +384,6 @@ contract GhoTokenPoolRemoteE2E is E2E, GhoBaseTest {
     sendRequestGho(1, rateLimiterConfig.capacity + 1, true, false);
 
     // max capacity, won't revert
-
     // Mint some GHO to inflate UpgradeableTokenPool facilitator level
     _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), rateLimiterConfig.capacity);
     vm.startPrank(OWNER);

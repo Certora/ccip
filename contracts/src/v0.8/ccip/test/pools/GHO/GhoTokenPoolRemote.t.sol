@@ -55,7 +55,6 @@ contract GhoTokenPoolRemote_lockOrBurn is GhoTokenPoolRemoteSetup {
         remoteChainSelector: DEST_CHAIN_SELECTOR,
         localToken: address(s_burnMintERC677)
       })
-      // OWNER, bytes(""), burnAmount, DEST_CHAIN_SELECTOR, bytes("")
     );
 
     // Facilitator checks
