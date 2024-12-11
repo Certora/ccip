@@ -408,7 +408,7 @@ contract GhoTokenPoolRemote_withdrawLiquidity is GhoTokenPoolRemoteSetup {
 
   function testFuzzWithdrawLiquiditySuccess(uint256 amount) public {
     amount = bound(amount, 1, type(uint128).max); // bound to bucket capacity
-    // prank newTokenPool.transferLiquidity
+    // prank previously bridged supply
     vm.startPrank(address(s_pool));
     s_burnMintERC677.mint(address(s_pool), amount);
 
@@ -416,5 +416,6 @@ contract GhoTokenPoolRemote_withdrawLiquidity is GhoTokenPoolRemoteSetup {
     s_pool.withdrawLiquidity(amount);
 
     assertEq(s_burnMintERC677.balanceOf(address(s_pool)), 0);
+    assertEq(GhoToken(address(s_burnMintERC677)).getFacilitator(address(s_pool)).bucketLevel, 0);
   }
 }
