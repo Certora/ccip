@@ -49,10 +49,13 @@ rule withdrawLiquidity_correctness(env e) {
 
   require e.msg.sender != currentContract;
   uint256 bal_before = erc20.balanceOf(e, currentContract);
+  uint256 curr_bridge_before = getCurrentBridgedAmount();
   withdrawLiquidity(e, amount);
   uint256 bal_after = erc20.balanceOf(e, currentContract);
+  uint256 curr_bridge_after = getCurrentBridgedAmount();
 
   assert (to_mathint(bal_after) == bal_before - amount);
+  assert (to_mathint(curr_bridge_after) == curr_bridge_before - amount);
 }
 
 
@@ -65,17 +68,20 @@ rule provideLiquidity_correctness(env e) {
 
   require e.msg.sender != currentContract;
   uint256 bal_before = erc20.balanceOf(e, currentContract);
+  uint256 curr_bridge_before = getCurrentBridgedAmount();
   provideLiquidity(e, amount);
   uint256 bal_after = erc20.balanceOf(e, currentContract);
+  uint256 curr_bridge_after = getCurrentBridgedAmount();
 
   assert (to_mathint(bal_after) == bal_before + amount);
+  assert (to_mathint(curr_bridge_after) == curr_bridge_before + amount);
 }
 
 
 /* ==============================================================================
-   rule: only_lockOrBurn_can_increase_currentBridged
+   rule: only_lockOrBurn_provideLiquidity_or_transferLiquidity_can_increase_currentBridged
    ============================================================================*/
-rule only_lockOrBurn_can_increase_currentBridged(env e) {
+rule only_lockOrBurn_provideLiquidity_or_transferLiquidity_can_increase_currentBridged(env e) {
   method f;
   calldataarg args;
 
@@ -85,14 +91,16 @@ rule only_lockOrBurn_can_increase_currentBridged(env e) {
 
   assert 
     curr_bridge_after > curr_bridge_before =>
-    f.selector==sig:lockOrBurn(Pool.LockOrBurnInV1).selector;
+    f.selector==sig:lockOrBurn(Pool.LockOrBurnInV1).selector || 
+    f.selector==sig:provideLiquidity(uint256).selector ||
+    f.selector==sig:transferLiquidity(address,uint256).selector;
 }
 
 
 /* ==============================================================================
-   rule: only_releaseOrMint_can_deccrease_currentBridged
+   rule: only_releaseOrMint_or_withdrawLiquidity_can_decrease_currentBridged
    ============================================================================*/
-rule only_releaseOrMint_can_decrease_currentBridged(env e) {
+rule only_releaseOrMint_or_withdrawLiquidity_can_decrease_currentBridged(env e) {
   method f;
   calldataarg args;
 
@@ -102,7 +110,8 @@ rule only_releaseOrMint_can_decrease_currentBridged(env e) {
 
   assert 
     curr_bridge_after < curr_bridge_before =>
-    f.selector==sig:releaseOrMint(Pool.ReleaseOrMintInV1).selector;
+    f.selector==sig:releaseOrMint(Pool.ReleaseOrMintInV1).selector ||
+    f.selector==sig:withdrawLiquidity(uint256).selector;
 }
 
 
