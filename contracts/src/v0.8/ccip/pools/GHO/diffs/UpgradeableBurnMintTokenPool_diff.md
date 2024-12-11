@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 30203a4ced..d47f3adbe7 100644
+index 30203a4ced..543cfd77ee 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,33 +1,60 @@
+@@ -1,33 +1,61 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
@@ -28,6 +28,7 @@ index 30203a4ced..d47f3adbe7 100644
 +/// @dev Contract adaptations:
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
++/// - Add GHO-Specific onlyOwner `transferLiquidity` which mints liquidity to the old pool
 
 -/// @notice This pool mints and burns a 3rd-party token.
  /// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
