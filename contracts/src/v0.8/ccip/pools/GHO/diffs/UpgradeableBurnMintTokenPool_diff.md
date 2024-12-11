@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 30203a4ced..5ef834d1d2 100644
+index 30203a4ced..d47f3adbe7 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,33 +1,48 @@
+@@ -1,33 +1,60 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
@@ -62,10 +62,21 @@ index 30203a4ced..5ef834d1d2 100644
 +    if (i_allowlistEnabled) _applyAllowListUpdates(new address[](0), allowlist);
 +  }
 +
++  /// @notice This function allows the owner to mint `amount` tokens on behalf of the pool and transfer them to `to`.
++  /// This is GHO-Specific and is called to match the facilitator level of the new pool with the old pool such that
++  /// it can burn the bridged supply once the old pool is deprecated. The old pool is then expected to burn `amount` of tokens
++  /// so that it can be removed as a facilitator on GHO.
++  /// @dev This is only called while offboarding an old token pool (or facilitator) in favor of this pool.
++  /// @param to The address to which the minted tokens will be transferred. This needs to be the old token pool,
++  /// or the facilitator being offboarded.
++  /// @param amount The amount of tokens to mint and transfer to old pool.
++  function transferLiquidity(address to, uint256 amount) external onlyOwner {
++    IBurnMintERC20(address(i_token)).mint(to, amount);
++  }
++
 +  /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract
 +  function _burn(uint256 amount) internal virtual override {
      IBurnMintERC20(address(i_token)).burn(amount);
    }
  }
-
 ```
