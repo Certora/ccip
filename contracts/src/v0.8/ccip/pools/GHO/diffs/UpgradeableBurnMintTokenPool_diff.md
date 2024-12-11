@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..a5cecc0430 100644
+index 9af0f22f4c..bbd4d018a5 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,28 +1,90 @@
+@@ -1,28 +1,102 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
@@ -104,6 +104,18 @@ index 9af0f22f4c..a5cecc0430 100644
 +    if (msg.sender != s_rateLimitAdmin && msg.sender != owner()) revert Unauthorized(msg.sender);
 +
 +    _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
++  }
++
++  /// @notice This function allows the owner to burn `amount` of the pool's token. This is
++  /// expected to be called while migrating liquidity to another pool and offboarding this
++  /// facilitator.
++  /// @dev New token pool should mint and transfer liquidity to this pool (since it does not
++  /// hold tokens any point in point, only mints/burns) which can be burnt and hence will reset
++  /// the facilitator bucket level GHO. This is needed to migrate facilitators, by offboarding
++  /// this token pool subsequently.
++  /// @param amount The amount of tokens to burn.
++  function withdrawLiquidity(uint256 amount) external onlyOwner {
++    IBurnMintERC20(address(i_token)).burn(amount);
 +  }
 +
 +  /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract

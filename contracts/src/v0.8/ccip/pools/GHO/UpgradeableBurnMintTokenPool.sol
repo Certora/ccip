@@ -84,6 +84,18 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
     _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
   }
 
+  /// @notice This function allows the owner to burn `amount` of the pool's token. This is
+  /// expected to be called while migrating liquidity to another pool and offboarding this
+  /// facilitator.
+  /// @dev New token pool should mint and transfer liquidity to this pool (since it does not
+  /// hold tokens any point in point, only mints/burns) which can be burnt and hence will reset
+  /// the facilitator bucket level GHO. This is needed to migrate facilitators, by offboarding
+  /// this token pool subsequently.
+  /// @param amount The amount of tokens to burn.
+  function withdrawLiquidity(uint256 amount) external onlyOwner {
+    IBurnMintERC20(address(i_token)).burn(amount);
+  }
+
   /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract
   function _burn(uint256 amount) internal virtual override {
     IBurnMintERC20(address(i_token)).burn(amount);
