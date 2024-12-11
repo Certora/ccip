@@ -21,6 +21,9 @@ import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
+/// - Increment bridged amount on transferLiquidity, reverts if amount + current bridged > bridge limit
+/// - Increment bridged amount on provideLiquidity, reverts if amount + current bridged > bridge limit
+/// - Decrement bridged amount on withdrawLiquidity, reverts if amount > gho.balanceOf(this)
 
 /// @notice Token pool used for tokens on their native chain. This uses a lock and release mechanism.
 /// Because of lock/unlock requiring liquidity, this pool contract also has function to add and remove
@@ -202,9 +205,12 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
 
   /// @notice Adds liquidity to the pool. The tokens should be approved first.
   /// @param amount The amount of liquidity to provide.
+  /// @dev amount being added + currentBridged needs to be within the bridge limit, otherwise increase bridge limit first
   function provideLiquidity(uint256 amount) external {
     if (!i_acceptLiquidity) revert LiquidityNotAccepted();
     if (s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
+
+    if ((s_currentBridged += amount) > s_bridgeLimit) revert BridgeLimitExceeded(s_bridgeLimit);
 
     i_token.safeTransferFrom(msg.sender, address(this), amount);
     emit LiquidityAdded(msg.sender, amount);
@@ -214,6 +220,8 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @param amount The amount of liquidity to remove.
   function withdrawLiquidity(uint256 amount) external {
     if (s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
+
+    s_currentBridged -= amount;
 
     if (i_token.balanceOf(address(this)) < amount) revert InsufficientLiquidity();
     i_token.safeTransfer(msg.sender, amount);
@@ -229,10 +237,13 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// changing which pool CCIP uses, to ensure both pools can operate. Then the pool should be changed in the
   /// TokenAdminRegistry, which will activate the new pool. All new transactions will use the new pool and its
   /// liquidity. Finally, the remaining liquidity can be transferred to the new pool using this function one more time.
+  /// @dev amount being added + currentBridged needs to be within the bridge limit, otherwise increase bridge limit first
   /// @param from The address of the old pool.
   /// @param amount The amount of liquidity to transfer.
   function transferLiquidity(address from, uint256 amount) external onlyOwner {
     UpgradeableLockReleaseTokenPool(from).withdrawLiquidity(amount);
+
+    if ((s_currentBridged += amount) > s_bridgeLimit) revert BridgeLimitExceeded(s_bridgeLimit);
 
     emit LiquidityTransferred(from, amount);
   }

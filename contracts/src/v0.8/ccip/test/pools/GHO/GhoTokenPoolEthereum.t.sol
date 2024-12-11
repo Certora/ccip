@@ -422,16 +422,26 @@ contract GhoTokenPoolEthereum_canAcceptLiquidity is GhoTokenPoolEthereumSetup {
 }
 
 contract GhoTokenPoolEthereum_provideLiquidity is GhoTokenPoolEthereumSetup {
+  error BridgeLimitExceeded(uint256 limit);
+
   function testFuzz_ProvideLiquiditySuccess(uint256 amount) public {
     vm.assume(amount < type(uint128).max);
+
+    uint256 bridgedAmount = s_ghoTokenPool.getCurrentBridgedAmount();
 
     uint256 balancePre = s_token.balanceOf(OWNER);
     s_token.approve(address(s_ghoTokenPool), amount);
 
+    if (amount > s_ghoTokenPool.getBridgeLimit()) {
+      vm.expectRevert(abi.encodeWithSelector(BridgeLimitExceeded.selector, s_ghoTokenPool.getBridgeLimit()));
+    }
     s_ghoTokenPool.provideLiquidity(amount);
 
-    assertEq(s_token.balanceOf(OWNER), balancePre - amount);
-    assertEq(s_token.balanceOf(address(s_ghoTokenPool)), amount);
+    if (amount < s_ghoTokenPool.getBridgeLimit()) {
+      assertEq(s_token.balanceOf(OWNER), balancePre - amount);
+      assertEq(s_token.balanceOf(address(s_ghoTokenPool)), amount);
+      assertEq(s_ghoTokenPool.getCurrentBridgedAmount(), bridgedAmount + amount);
+    }
   }
 
   // Reverts
@@ -445,6 +455,11 @@ contract GhoTokenPoolEthereum_provideLiquidity is GhoTokenPoolEthereumSetup {
 
   function testFuzz_ExceedsAllowance(uint256 amount) public {
     vm.assume(amount > 0);
+
+    changePrank(AAVE_DAO);
+    s_ghoTokenPool.setBridgeLimit(amount);
+    changePrank(OWNER);
+
     vm.expectRevert(stdError.arithmeticError);
     s_ghoTokenPool.provideLiquidity(amount);
   }
@@ -459,7 +474,7 @@ contract GhoTokenPoolEthereum_provideLiquidity is GhoTokenPoolEthereumSetup {
 
 contract GhoTokenPoolEthereum_withdrawalLiquidity is GhoTokenPoolEthereumSetup {
   function testFuzz_WithdrawalLiquiditySuccess(uint256 amount) public {
-    vm.assume(amount < type(uint128).max);
+    amount = bound(amount, 1, s_ghoTokenPool.getBridgeLimit());
 
     uint256 balancePre = s_token.balanceOf(OWNER);
     s_token.approve(address(s_ghoTokenPool), amount);
@@ -481,6 +496,11 @@ contract GhoTokenPoolEthereum_withdrawalLiquidity is GhoTokenPoolEthereumSetup {
 
   function testInsufficientLiquidityReverts() public {
     uint256 maxUint128 = 2 ** 128 - 1;
+
+    changePrank(AAVE_DAO);
+    s_ghoTokenPool.setBridgeLimit(maxUint128);
+    changePrank(OWNER);
+
     s_token.approve(address(s_ghoTokenPool), maxUint128);
     s_ghoTokenPool.provideLiquidity(maxUint128);
 
@@ -490,6 +510,61 @@ contract GhoTokenPoolEthereum_withdrawalLiquidity is GhoTokenPoolEthereumSetup {
 
     vm.expectRevert(LockReleaseTokenPool.InsufficientLiquidity.selector);
     s_ghoTokenPool.withdrawLiquidity(1);
+  }
+}
+
+contract GhoTokenPoolEthereum_transferLiquidity is GhoTokenPoolEthereumSetup {
+  UpgradeableLockReleaseTokenPool internal s_oldLockReleaseTokenPool;
+
+  uint256 internal s_amount = 100_000_000e18;
+
+  error OnlyCallableByOwner();
+  error BridgeLimitExceeded(uint256 limit);
+
+  function setUp() public virtual override {
+    super.setUp();
+
+    s_oldLockReleaseTokenPool = UpgradeableLockReleaseTokenPool(
+      _deployUpgradeableLockReleaseTokenPool(
+        address(s_token),
+        address(s_mockRMN),
+        address(s_sourceRouter),
+        AAVE_DAO,
+        INITIAL_BRIDGE_LIMIT,
+        PROXY_ADMIN
+      )
+    );
+    deal(address(s_token), address(s_oldLockReleaseTokenPool), s_amount);
+    // write to currentBridged
+    vm.store(address(s_oldLockReleaseTokenPool), bytes32(uint256(12)), bytes32(s_amount));
+    changePrank(AAVE_DAO);
+  }
+
+  function testFuzz_TransferLiquidity(uint256 amount) public {
+    amount = bound(amount, 1, s_amount);
+
+    s_oldLockReleaseTokenPool.setRebalancer(address(s_ghoTokenPool));
+    uint256 bridgedAmount = s_ghoTokenPool.getCurrentBridgedAmount();
+
+    if (amount > s_ghoTokenPool.getBridgeLimit()) {
+      vm.expectRevert(abi.encodeWithSelector(BridgeLimitExceeded.selector, s_ghoTokenPool.getBridgeLimit()));
+    }
+    s_ghoTokenPool.transferLiquidity(address(s_oldLockReleaseTokenPool), amount);
+
+    if (amount < s_ghoTokenPool.getBridgeLimit()) {
+      assertEq(s_token.balanceOf(address(s_ghoTokenPool)), amount);
+      assertEq(s_token.balanceOf(address(s_oldLockReleaseTokenPool)), s_amount - amount);
+      assertEq(s_ghoTokenPool.getCurrentBridgedAmount(), bridgedAmount + amount);
+    }
+  }
+
+  // Reverts
+
+  function test_UnauthorizedReverts() public {
+    changePrank(STRANGER);
+    vm.expectRevert(OnlyCallableByOwner.selector);
+
+    s_ghoTokenPool.transferLiquidity(address(1), 1);
   }
 }
 
