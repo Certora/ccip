@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..bbd4d018a5 100644
+index 9af0f22f4c..3ce2c5a9ab 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
 @@ -1,28 +1,102 @@
@@ -107,12 +107,12 @@ index 9af0f22f4c..bbd4d018a5 100644
 +  }
 +
 +  /// @notice This function allows the owner to burn `amount` of the pool's token. This is
-+  /// expected to be called while migrating liquidity to another pool and offboarding this
-+  /// facilitator.
-+  /// @dev New token pool should mint and transfer liquidity to this pool (since it does not
-+  /// hold tokens any point in point, only mints/burns) which can be burnt and hence will reset
-+  /// the facilitator bucket level GHO. This is needed to migrate facilitators, by offboarding
-+  /// this token pool subsequently.
++  /// expected to be called while migrating facilitators by offboarding this facilitator in
++  /// favor of a new token pool.
++  /// @dev New token pool should mint and transfer liquidity to this pool (since this pool
++  /// does not hold tokens at any point in time) which can be burnt and hence will reduce
++  /// the facilitator bucket level on GHO. The naming convention mimics that in LockRelease
++  /// type token pools for the sake of consistency.
 +  /// @param amount The amount of tokens to burn.
 +  function withdrawLiquidity(uint256 amount) external onlyOwner {
 +    IBurnMintERC20(address(i_token)).burn(amount);
