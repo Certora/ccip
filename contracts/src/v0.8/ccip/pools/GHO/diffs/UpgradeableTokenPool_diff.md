@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index cd3096f4ef..f18322688f 100644
+index cd3096f4ef..e77da3feb8 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
 @@ -1,26 +1,29 @@
@@ -188,7 +188,17 @@ index cd3096f4ef..f18322688f 100644
      return s_remoteChainSelectors.contains(remoteChainSelector);
    }
 
-@@ -495,9 +468,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -379,8 +352,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+   /// @notice Sets the permissions for a list of chains selectors. Actual senders for these chains
+   /// need to be allowed on the Router to interact with this pool.
+   /// @param remoteChainSelectorsToRemove A list of chain selectors to remove.
+-  /// @param chainsToAdd A list of chains and their new permission status & rate limits. Rate limits
+-  /// are only used when the chain is being added through `allowed` being true.
++  /// @param chainsToAdd A list of chains and their new permission status & rate limits.
+   /// @dev Only callable by the owner
+   function applyChainUpdates(
+     uint64[] calldata remoteChainSelectorsToRemove,
+@@ -495,9 +467,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @notice Sets the rate limiter admin address.
    /// @dev Only callable by the owner.
    /// @param rateLimitAdmin The new rate limiter admin address.
@@ -199,7 +209,7 @@ index cd3096f4ef..f18322688f 100644
      s_rateLimitAdmin = rateLimitAdmin;
      emit RateLimitAdminSet(rateLimitAdmin);
    }
-@@ -566,18 +537,14 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -566,18 +536,14 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
 
    /// @notice Checks whether remote chain selector is configured on this contract, and if the msg.sender
    /// is a permissioned onRamp for the given chain on the Router.
@@ -220,7 +230,7 @@ index cd3096f4ef..f18322688f 100644
      if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
      if (!s_router.isOffRamp(remoteChainSelector, msg.sender)) revert CallerIsNotARampOnRouter(msg.sender);
    }
-@@ -586,9 +553,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -586,9 +552,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    // │                          Allowlist                           │
    // ================================================================
 
