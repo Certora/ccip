@@ -32,7 +32,8 @@ invariant currentBridge_LEQ_bridgeLimit()
   getCurrentBridgedAmount() <= getBridgeLimit()
   filtered { f ->
     !f.isView &&
-    f.selector != sig:setBridgeLimit(uint256).selector}
+    f.selector != sig:setBridgeLimit(uint256).selector &&
+    f.selector != sig:setCurrentBridgedAmount(uint256).selector}
   {
     preserved initialize(address owner, address[] allowlist, address router, uint256 bridgeLimit) with (env e2) {
       require getCurrentBridgedAmount()==0;
@@ -49,13 +50,10 @@ rule withdrawLiquidity_correctness(env e) {
 
   require e.msg.sender != currentContract;
   uint256 bal_before = erc20.balanceOf(e, currentContract);
-  uint256 curr_bridge_before = getCurrentBridgedAmount();
   withdrawLiquidity(e, amount);
   uint256 bal_after = erc20.balanceOf(e, currentContract);
-  uint256 curr_bridge_after = getCurrentBridgedAmount();
 
   assert (to_mathint(bal_after) == bal_before - amount);
-  assert (to_mathint(curr_bridge_after) == curr_bridge_before - amount);
 }
 
 
@@ -68,21 +66,20 @@ rule provideLiquidity_correctness(env e) {
 
   require e.msg.sender != currentContract;
   uint256 bal_before = erc20.balanceOf(e, currentContract);
-  uint256 curr_bridge_before = getCurrentBridgedAmount();
   provideLiquidity(e, amount);
   uint256 bal_after = erc20.balanceOf(e, currentContract);
-  uint256 curr_bridge_after = getCurrentBridgedAmount();
 
   assert (to_mathint(bal_after) == bal_before + amount);
-  assert (to_mathint(curr_bridge_after) == curr_bridge_before + amount);
 }
 
+definition filterSetter(method f) returns bool = f.selector != sig:setCurrentBridgedAmount(uint256).selector;
 
 /* ==============================================================================
-   rule: only_lockOrBurn_provideLiquidity_or_transferLiquidity_can_increase_currentBridged
+   rule: only_lockOrBurn_can_increase_currentBridged
    ============================================================================*/
-rule only_lockOrBurn_provideLiquidity_or_transferLiquidity_can_increase_currentBridged(env e) {
-  method f;
+rule only_lockOrBurn_can_increase_currentBridged(env e, method f) 
+  filtered { f -> filterSetter(f)  }
+{
   calldataarg args;
 
   uint256 curr_bridge_before = getCurrentBridgedAmount();
@@ -91,17 +88,16 @@ rule only_lockOrBurn_provideLiquidity_or_transferLiquidity_can_increase_currentB
 
   assert 
     curr_bridge_after > curr_bridge_before =>
-    f.selector==sig:lockOrBurn(Pool.LockOrBurnInV1).selector || 
-    f.selector==sig:provideLiquidity(uint256).selector ||
-    f.selector==sig:transferLiquidity(address,uint256).selector;
+    f.selector==sig:lockOrBurn(Pool.LockOrBurnInV1).selector;
 }
 
 
 /* ==============================================================================
-   rule: only_releaseOrMint_or_withdrawLiquidity_can_decrease_currentBridged
+   rule: only_releaseOrMint_currentBridged
    ============================================================================*/
-rule only_releaseOrMint_or_withdrawLiquidity_can_decrease_currentBridged(env e) {
-  method f;
+rule only_releaseOrMint_currentBridged(env e, method f) 
+  filtered { f -> filterSetter(f) }
+{
   calldataarg args;
 
   uint256 curr_bridge_before = getCurrentBridgedAmount();
@@ -110,8 +106,7 @@ rule only_releaseOrMint_or_withdrawLiquidity_can_decrease_currentBridged(env e) 
 
   assert 
     curr_bridge_after < curr_bridge_before =>
-    f.selector==sig:releaseOrMint(Pool.ReleaseOrMintInV1).selector ||
-    f.selector==sig:withdrawLiquidity(uint256).selector;
+    f.selector==sig:releaseOrMint(Pool.ReleaseOrMintInV1).selector;
 }
 
 
@@ -126,3 +121,13 @@ rule only_bridgeLimitAdmin_or_owner_can_call_setBridgeLimit(env e) {
   assert e.msg.sender==getBridgeLimitAdmin(e) || e.msg.sender==owner();
 }
 
+/* ==============================================================================
+   rule: only_owner_can_call_setCurrentBridgedAmount
+   ============================================================================*/
+rule only_owner_can_call_setCurrentBridgedAmount(env e) {
+  uint256 newBridgedAmount;
+
+  setCurrentBridgedAmount(e, newBridgedAmount);
+  
+  assert e.msg.sender==owner();
+}

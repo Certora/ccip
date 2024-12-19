@@ -5,6 +5,12 @@ index ecc28a14dd..21bd2df50d 100644
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
 @@ -1,25 +1,44 @@
  // SPDX-License-Identifier: BUSL-1.1
+diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
+index ecc28a14dd..16e1103542 100644
+--- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
++++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
+@@ -1,25 +1,43 @@
+ // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
 
@@ -23,7 +29,8 @@ index ecc28a14dd..21bd2df50d 100644
 +import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 +import {SafeERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
 +import {IERC165} from "../../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/introspection/IERC165.sol";
-+
+
+-/// @notice Token pool used for tokens on their native chain. This uses a lock and release mechanism.
 +import {Pool} from "../../libraries/Pool.sol";
 +import {IRouter} from "../../interfaces/IRouter.sol";
 +import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
@@ -35,11 +42,10 @@ index ecc28a14dd..21bd2df50d 100644
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
-+/// - Increment bridged amount on transferLiquidity, reverts if amount + current bridged > bridge limit
-+/// - Increment bridged amount on provideLiquidity, reverts if amount + current bridged > bridge limit
-+/// - Decrement bridged amount on withdrawLiquidity, reverts if amount > gho.balanceOf(this)
-
- /// @notice Token pool used for tokens on their native chain. This uses a lock and release mechanism.
++/// - Permissioned bridgedAmount setter to facilitate liquidity migration
++/// - Remove i_token decimal check in UpgradeableTokenPool constructor
++
++/// @dev Token pool used for tokens on their native chain. This uses a lock and release mechanism.
  /// Because of lock/unlock requiring liquidity, this pool contract also has function to add and remove
  /// liquidity. This allows for proper bookkeeping for both user and liquidity provider balances.
  /// @dev One token per LockReleaseTokenPool.
@@ -57,7 +63,7 @@ index ecc28a14dd..21bd2df50d 100644
 
    event LiquidityTransferred(address indexed from, uint256 amount);
 
-@@ -33,30 +52,69 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -33,30 +51,69 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @notice The address of the rebalancer.
    address internal s_rebalancer;
 
@@ -136,7 +142,7 @@ index ecc28a14dd..21bd2df50d 100644
    }
 
    /// @notice Release tokens from the pool to the recipient
-@@ -64,11 +122,18 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -64,11 +121,18 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    function releaseOrMint(
      Pool.ReleaseOrMintInV1 calldata releaseOrMintIn
    ) external virtual override returns (Pool.ReleaseOrMintOutV1 memory) {
@@ -157,7 +163,7 @@ index ecc28a14dd..21bd2df50d 100644
 
      // Release to the recipient
      getToken().safeTransfer(releaseOrMintIn.receiver, localAmount);
-@@ -79,9 +144,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -79,9 +143,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    }
 
    /// @inheritdoc IERC165
@@ -168,7 +174,7 @@ index ecc28a14dd..21bd2df50d 100644
      return interfaceId == type(ILiquidityContainer).interfaceId || super.supportsInterface(interfaceId);
    }
 
-@@ -93,12 +156,47 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -93,12 +155,55 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
 
    /// @notice Sets the LiquidityManager address.
    /// @dev Only callable by the owner.
@@ -179,6 +185,14 @@ index ecc28a14dd..21bd2df50d 100644
      s_rebalancer = rebalancer;
    }
 
++  /// @notice Sets the current bridged amount to other chains
++  /// @dev Only callable by the owner.
++  /// @dev Does not emit event, it is expected to only be called during token pool migrations.
++  /// @param newCurrentBridged The new bridged amount
++  function setCurrentBridgedAmount(uint256 newCurrentBridged) external onlyOwner {
++    s_currentBridged = newCurrentBridged;
++  }
++
 +  /// @notice Sets the bridge limit, the maximum amount of tokens that can be bridged out
 +  /// @dev Only callable by the owner or the bridge limit admin.
 +  /// @dev Bridge limit changes should be carefully managed, specially when reducing below the current bridged amount
@@ -219,23 +233,18 @@ index ecc28a14dd..21bd2df50d 100644
    /// @notice Checks if the pool can accept liquidity.
    /// @return true if the pool can accept liquidity, false otherwise.
    function canAcceptLiquidity() external view returns (bool) {
-@@ -107,23 +205,24 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -107,9 +212,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
 
    /// @notice Adds liquidity to the pool. The tokens should be approved first.
    /// @param amount The amount of liquidity to provide.
 -  function provideLiquidity(
 -    uint256 amount
 -  ) external {
-+  /// @dev amount being added + currentBridged needs to be within the bridge limit, otherwise increase bridge limit first
 +  function provideLiquidity(uint256 amount) external {
      if (!i_acceptLiquidity) revert LiquidityNotAccepted();
      if (s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
 
-+    if ((s_currentBridged += amount) > s_bridgeLimit) revert BridgeLimitExceeded(s_bridgeLimit);
-+
-     i_token.safeTransferFrom(msg.sender, address(this), amount);
-     emit LiquidityAdded(msg.sender, amount);
-   }
+@@ -119,9 +222,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
 
    /// @notice Removed liquidity to the pool. The tokens will be sent to msg.sender.
    /// @param amount The amount of liquidity to remove.
@@ -245,23 +254,13 @@ index ecc28a14dd..21bd2df50d 100644
 +  function withdrawLiquidity(uint256 amount) external {
      if (s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
 
-+    s_currentBridged -= amount;
-+
      if (i_token.balanceOf(address(this)) < amount) revert InsufficientLiquidity();
-     i_token.safeTransfer(msg.sender, amount);
-     emit LiquidityRemoved(msg.sender, amount);
-@@ -138,10 +237,13 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
-   /// changing which pool CCIP uses, to ensure both pools can operate. Then the pool should be changed in the
-   /// TokenAdminRegistry, which will activate the new pool. All new transactions will use the new pool and its
-   /// liquidity. Finally, the remaining liquidity can be transferred to the new pool using this function one more time.
-+  /// @dev amount being added + currentBridged needs to be within the bridge limit, otherwise increase bridge limit first
+@@ -141,7 +242,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @param from The address of the old pool.
    /// @param amount The amount of liquidity to transfer.
    function transferLiquidity(address from, uint256 amount) external onlyOwner {
 -    LockReleaseTokenPool(from).withdrawLiquidity(amount);
 +    UpgradeableLockReleaseTokenPool(from).withdrawLiquidity(amount);
-+
-+    if ((s_currentBridged += amount) > s_bridgeLimit) revert BridgeLimitExceeded(s_bridgeLimit);
 
      emit LiquidityTransferred(from, amount);
    }
