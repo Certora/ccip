@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
-
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
 
-import {IRouter} from "../../interfaces/IRouter.sol";
-
 import {UpgradeableBurnMintTokenPoolAbstract} from "./UpgradeableBurnMintTokenPoolAbstract.sol";
 import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
+
+import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
+import {IRouter} from "../../interfaces/IRouter.sol";
 
 /// @title UpgradeableBurnMintTokenPool
 /// @author Aave Labs

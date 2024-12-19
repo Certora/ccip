@@ -1,26 +1,25 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 30203a4ced..5337471a78 100644
+index 30203a4ced..8fa7b2669d 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,33 +1,62 @@
+@@ -1,33 +1,61 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
 
 -import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 -import {IBurnMintERC20} from "../../shared/token/ERC20/IBurnMintERC20.sol";
-+import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
++import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
++import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
 
 -import {BurnMintTokenPoolAbstract} from "./BurnMintTokenPoolAbstract.sol";
 -import {TokenPool} from "./TokenPool.sol";
-+import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
-+import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
-+
-+import {IRouter} from "../../interfaces/IRouter.sol";
-+
 +import {UpgradeableBurnMintTokenPoolAbstract} from "./UpgradeableBurnMintTokenPoolAbstract.sol";
 +import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
++
++import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
++import {IRouter} from "../../interfaces/IRouter.sol";
 +
 +/// @title UpgradeableBurnMintTokenPool
 +/// @author Aave Labs
