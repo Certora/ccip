@@ -18,6 +18,7 @@ import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Add GHO-Specific onlyOwner `transferLiquidity` which mints liquidity to the old pool
+/// - Remove i_token decimal check in UpgradeableTokenPool constructor
 
 /// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
 /// It either accepts any address as originalSender, or only accepts whitelisted originalSender.

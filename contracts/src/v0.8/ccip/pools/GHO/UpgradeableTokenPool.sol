@@ -22,7 +22,8 @@ import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v5.0.2/contra
 /// destination, the number of tokens minted/released could be less than the number of tokens burned/locked. This is because the source
 /// chain does not know about the destination token decimals. This is not a problem if the decimals are the same on both
 /// chains.
-///
+/// @dev Contract adaptations:
+///  - Remove i_token decimal check in constructor.
 /// Example:
 /// Assume there is a token with 6 decimals on chain A and 3 decimals on chain B.
 /// - 1.234567 tokens are burned on chain A.
@@ -123,15 +124,6 @@ abstract contract UpgradeableTokenPool is IPoolV1, Ownable2StepMsgSender {
     if (address(token) == address(0) || rmnProxy == address(0)) revert ZeroAddressNotAllowed();
     i_token = token;
     i_rmnProxy = rmnProxy;
-
-    try IERC20Metadata(address(token)).decimals() returns (uint8 actualTokenDecimals) {
-      if (localTokenDecimals != actualTokenDecimals) {
-        revert InvalidDecimalArgs(localTokenDecimals, actualTokenDecimals);
-      }
-    } catch {
-      // The decimals function doesn't exist, which is possible since it's optional in the ERC20 spec. We skip the check and
-      // assume the supplied token decimals are correct.
-    }
     i_tokenDecimals = localTokenDecimals;
 
     // Pool can be set as permissioned or permissionless at deployment time only to save hot-path gas.

@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index cd3096f4ef..f2b3abc3d7 100644
+index cd3096f4ef..f18322688f 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-@@ -1,20 +1,22 @@
+@@ -1,26 +1,29 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
@@ -38,7 +38,15 @@ index cd3096f4ef..f2b3abc3d7 100644
  /// @dev This pool supports different decimals on different chains but using this feature could impact the total number
  /// of tokens in circulation. Since all of the tokens are locked/burned on the source, and a rounded amount is minted/released on the
  /// destination, the number of tokens minted/released could be less than the number of tokens burned/locked. This is because the source
-@@ -29,7 +31,7 @@ import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v5.0.2/contracts
+ /// chain does not know about the destination token decimals. This is not a problem if the decimals are the same on both
+ /// chains.
+-///
++/// @dev Contract adaptations:
++///  - Remove i_token decimal check in constructor.
+ /// Example:
+ /// Assume there is a token with 6 decimals on chain A and 3 decimals on chain B.
+ /// - 1.234567 tokens are burned on chain A.
+@@ -29,7 +32,7 @@ import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v5.0.2/contracts
  /// 0.000567 tokens.
  /// In the case of a burnMint pool on chain A, these funds are burned in the pool on chain A.
  /// In the case of a lockRelease pool on chain A, these funds accumulate in the pool on chain A.
@@ -47,7 +55,7 @@ index cd3096f4ef..f2b3abc3d7 100644
    using EnumerableSet for EnumerableSet.Bytes32Set;
    using EnumerableSet for EnumerableSet.AddressSet;
    using EnumerableSet for EnumerableSet.UintSet;
-@@ -117,8 +119,8 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -117,34 +120,18 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @dev Can be address(0) if none is configured.
    address internal s_rateLimitAdmin;
 
@@ -57,9 +65,15 @@ index cd3096f4ef..f2b3abc3d7 100644
 +    if (address(token) == address(0) || rmnProxy == address(0)) revert ZeroAddressNotAllowed();
      i_token = token;
      i_rmnProxy = rmnProxy;
-
-@@ -132,19 +134,12 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
-     }
+-
+-    try IERC20Metadata(address(token)).decimals() returns (uint8 actualTokenDecimals) {
+-      if (localTokenDecimals != actualTokenDecimals) {
+-        revert InvalidDecimalArgs(localTokenDecimals, actualTokenDecimals);
+-      }
+-    } catch {
+-      // The decimals function doesn't exist, which is possible since it's optional in the ERC20 spec. We skip the check and
+-      // assume the supplied token decimals are correct.
+-    }
      i_tokenDecimals = localTokenDecimals;
 
 -    s_router = IRouter(router);
@@ -80,7 +94,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      return token == address(i_token);
    }
 
-@@ -168,9 +163,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -168,9 +155,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
 
    /// @notice Sets the pool's Router
    /// @param newRouter The new Router
@@ -91,7 +105,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      if (newRouter == address(0)) revert ZeroAddressNotAllowed();
      address oldRouter = address(s_router);
      s_router = IRouter(newRouter);
-@@ -179,11 +172,11 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -179,11 +164,11 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    }
 
    /// @notice Signals which version of the pool interface is supported
@@ -108,7 +122,7 @@ index cd3096f4ef..f2b3abc3d7 100644
    }
 
    // ================================================================
-@@ -199,9 +192,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -199,9 +184,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @param lockOrBurnIn The input to validate.
    /// @dev This function should always be called before executing a lock or burn. Not doing so would allow
    /// for various exploits.
@@ -119,7 +133,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      if (!isSupportedToken(lockOrBurnIn.localToken)) revert InvalidToken(lockOrBurnIn.localToken);
      if (IRMN(i_rmnProxy).isCursed(bytes16(uint128(lockOrBurnIn.remoteChainSelector)))) revert CursedByRMN();
      _checkAllowList(lockOrBurnIn.originalSender);
-@@ -219,9 +210,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -219,9 +202,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @param releaseOrMintIn The input to validate.
    /// @dev This function should always be called before executing a release or mint. Not doing so would allow
    /// for various exploits.
@@ -130,7 +144,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      if (!isSupportedToken(releaseOrMintIn.localToken)) revert InvalidToken(releaseOrMintIn.localToken);
      if (IRMN(i_rmnProxy).isCursed(bytes16(uint128(releaseOrMintIn.remoteChainSelector)))) revert CursedByRMN();
      _onlyOffRamp(releaseOrMintIn.remoteChainSelector);
-@@ -247,9 +236,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -247,9 +228,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
      return abi.encode(i_tokenDecimals);
    }
 
@@ -141,7 +155,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      // Fallback to the local token decimals if the source pool data is empty. This allows for backwards compatibility.
      if (sourcePoolData.length == 0) {
        return i_tokenDecimals;
-@@ -304,9 +291,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -304,9 +283,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @notice Gets the pool address on the remote chain.
    /// @param remoteChainSelector Remote chain selector.
    /// @dev To support non-evm chains, this value is encoded into bytes
@@ -152,7 +166,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      bytes32[] memory remotePoolHashes = s_remoteChainConfigs[remoteChainSelector].remotePools.values();
 
      bytes[] memory remotePools = new bytes[](remotePoolHashes.length);
-@@ -327,9 +312,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -327,9 +304,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @notice Gets the token address on the remote chain.
    /// @param remoteChainSelector Remote chain selector.
    /// @dev To support non-evm chains, this value is encoded into bytes
@@ -163,7 +177,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      return s_remoteChainConfigs[remoteChainSelector].remoteTokenAddress;
    }
 
-@@ -358,9 +341,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -358,9 +333,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    }
 
    /// @inheritdoc IPoolV1
@@ -174,7 +188,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      return s_remoteChainSelectors.contains(remoteChainSelector);
    }
 
-@@ -495,9 +476,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -495,9 +468,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @notice Sets the rate limiter admin address.
    /// @dev Only callable by the owner.
    /// @param rateLimitAdmin The new rate limiter admin address.
@@ -185,7 +199,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      s_rateLimitAdmin = rateLimitAdmin;
      emit RateLimitAdminSet(rateLimitAdmin);
    }
-@@ -566,18 +545,14 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -566,18 +537,14 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
 
    /// @notice Checks whether remote chain selector is configured on this contract, and if the msg.sender
    /// is a permissioned onRamp for the given chain on the Router.
@@ -206,7 +220,7 @@ index cd3096f4ef..f2b3abc3d7 100644
      if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
      if (!s_router.isOffRamp(remoteChainSelector, msg.sender)) revert CallerIsNotARampOnRouter(msg.sender);
    }
-@@ -586,9 +561,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -586,9 +553,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    // │                          Allowlist                           │
    // ================================================================
 
