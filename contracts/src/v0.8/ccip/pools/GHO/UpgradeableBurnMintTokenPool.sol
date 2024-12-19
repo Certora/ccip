@@ -51,7 +51,7 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
   /// @param to The address to which the minted tokens will be transferred. This needs to be the old token pool,
   /// or the facilitator being offboarded.
   /// @param amount The amount of tokens to mint and transfer to old pool.
-  function transferLiquidity(address to, uint256 amount) external onlyOwner {
+  function mintAndTransferLiquidity(address to, uint256 amount) external onlyOwner {
     IBurnMintERC20(address(i_token)).mint(to, amount);
   }
 

@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 30203a4ced..75dbb21fe6 100644
+index 30203a4ced..5337471a78 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
 @@ -1,33 +1,62 @@
@@ -72,7 +72,7 @@ index 30203a4ced..75dbb21fe6 100644
 +  /// @param to The address to which the minted tokens will be transferred. This needs to be the old token pool,
 +  /// or the facilitator being offboarded.
 +  /// @param amount The amount of tokens to mint and transfer to old pool.
-+  function transferLiquidity(address to, uint256 amount) external onlyOwner {
++  function mintAndTransferLiquidity(address to, uint256 amount) external onlyOwner {
 +    IBurnMintERC20(address(i_token)).mint(to, amount);
 +  }
 +

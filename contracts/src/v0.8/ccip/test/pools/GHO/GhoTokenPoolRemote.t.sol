@@ -500,3 +500,34 @@ contract GhoTokenPoolRemote_setRateLimitAdmin is GhoTokenPoolRemoteSetup {
     s_pool.setRateLimitAdmin(STRANGER);
   }
 }
+
+contract GhoTokenPoolRemote_mintAndTransferLiquidity is GhoTokenPoolRemoteSetup {
+  error OnlyCallableByOwner();
+
+  function testMintAndTransferLiquidityAdminSuccess(uint256 amount) public {
+    amount = bound(amount, 1, type(uint128).max); // current pool capacity
+    // function expected to match bucket level of old facilitator which burns
+    // provided tokens to reduce its capacity
+    address oldFacilitator = makeAddr("oldFacilitator");
+    assertEq(s_burnMintERC677.balanceOf(oldFacilitator), 0);
+
+    changePrank(AAVE_DAO);
+    vm.expectEmit(address(s_burnMintERC677));
+    emit Transfer(address(0), oldFacilitator, amount);
+    s_pool.mintAndTransferLiquidity(oldFacilitator, amount);
+
+    assertEq(s_burnMintERC677.balanceOf(oldFacilitator), amount);
+    assertEq(s_burnMintERC677.balanceOf(address(s_pool)), 0);
+
+    assertEq(GhoToken(address(s_burnMintERC677)).getFacilitator(address(s_pool)).bucketLevel, amount);
+  }
+
+  // Reverts
+
+  function testMintAndTransferLiquidityAdminReverts() public {
+    vm.startPrank(STRANGER);
+
+    vm.expectRevert(OnlyCallableByOwner.selector);
+    s_pool.mintAndTransferLiquidity(makeAddr("oldFacilitator"), 13e7);
+  }
+}
