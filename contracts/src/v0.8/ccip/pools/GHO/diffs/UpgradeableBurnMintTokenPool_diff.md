@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..b830f7524c 100644
+index 9af0f22f4c..df7c49cb95 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,28 +1,103 @@
+@@ -1,28 +1,102 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
@@ -28,7 +28,7 @@ index 9af0f22f4c..b830f7524c 100644
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Inclusion of rate limit admin who may configure rate limits in addition to owner
-+/// - Add GHO-Specific onlyOwner `directBurn` which burns liquidity & reduces facilitator level.
++/// - Addition of authorized function to to directly burn liquidity, thereby reducing the facilitator's bucket level.
 +/// - Modifications from inherited contract (see contract for more details):
 +///   - UpgradeableTokenPool: Modify `onlyOnRamp` & `onlyOffRamp` modifier to accept transactions from ProxyPool
 +contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
@@ -112,8 +112,7 @@ index 9af0f22f4c..b830f7524c 100644
 +  /// favor of a new token pool.
 +  /// @dev New token pool should mint and transfer liquidity to this pool (since this pool
 +  /// does not hold tokens at any point in time) which can be burnt and hence will reduce
-+  /// the facilitator bucket level on GHO. The naming convention is inspired from  that in
-+  /// LockRelease type token pools for the sake of consistency.
++  /// the facilitator bucket level on GHO.
 +  /// @param amount The amount of tokens to burn.
 +  function directBurn(uint256 amount) external onlyOwner {
 +    _burn(amount);
