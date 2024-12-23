@@ -15,6 +15,7 @@ import {BaseTest} from "../../BaseTest.t.sol";
 
 abstract contract GhoBaseTest is BaseTest {
   error Unauthorized(address caller);
+  error OnlyCallableByOwner();
 
   address internal RMN_PROXY = makeAddr("RMN_PROXY");
   address internal ROUTER = makeAddr("ROUTER");

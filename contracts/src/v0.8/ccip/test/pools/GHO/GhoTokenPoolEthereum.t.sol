@@ -16,8 +16,6 @@ import {MockUpgradeable} from "../../mocks/MockUpgradeable.sol";
 import {GhoTokenPoolEthereumSetup} from "./GhoTokenPoolEthereumSetup.t.sol";
 
 contract GhoTokenPoolEthereum_setRebalancer is GhoTokenPoolEthereumSetup {
-  error OnlyCallableByOwner();
-
   function testSetRebalancerSuccess() public {
     assertEq(address(s_ghoTokenPool.getRebalancer()), OWNER);
     changePrank(AAVE_DAO);
@@ -493,7 +491,6 @@ contract GhoTokenPoolEthereum_transferLiquidity is GhoTokenPoolEthereumSetup {
 
   uint256 internal s_amount = 100_000_000e18;
 
-  error OnlyCallableByOwner();
   error BridgeLimitExceeded(uint256 limit);
 
   function setUp() public virtual override {
@@ -537,8 +534,6 @@ contract GhoTokenPoolEthereum_transferLiquidity is GhoTokenPoolEthereumSetup {
 }
 
 contract GhoTokenPoolEthereum_setCurrentBridgedAmount is GhoTokenPoolEthereumSetup {
-  error OnlyCallableByOwner();
-
   function setUp() public override {
     super.setUp();
   }
@@ -567,8 +562,6 @@ contract GhoTokenPoolEthereum_supportsInterface is GhoTokenPoolEthereumSetup {
 }
 
 contract GhoTokenPoolEthereum_setChainRateLimiterConfig is GhoTokenPoolEthereumSetup {
-  error OnlyCallableByOwner();
-
   event ConfigChanged(RateLimiter.Config);
   event ChainConfigured(
     uint64 chainSelector,
@@ -692,8 +685,6 @@ contract GhoTokenPoolEthereum_setChainRateLimiterConfig is GhoTokenPoolEthereumS
 }
 
 contract GhoTokenPoolEthereum_setRateLimitAdmin is GhoTokenPoolEthereumSetup {
-  error OnlyCallableByOwner();
-
   function testSetRateLimitAdminSuccess() public {
     assertEq(address(0), s_ghoTokenPool.getRateLimitAdmin());
     changePrank(AAVE_DAO);
@@ -896,8 +887,6 @@ contract GhoTokenPoolEthereum_setBridgeLimit is GhoTokenPoolEthereumSetup {
 }
 
 contract GhoTokenPoolEthereum_setBridgeLimitAdmin is GhoTokenPoolEthereumSetup {
-  error OnlyCallableByOwner();
-
   event BridgeLimitAdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 
   function testSetBridgeLimitAdminSuccess() public {

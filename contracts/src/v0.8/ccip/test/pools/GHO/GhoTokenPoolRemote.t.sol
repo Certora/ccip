@@ -482,8 +482,6 @@ contract GhoTokenPoolRemote_setChainRateLimiterConfig is GhoTokenPoolRemoteSetup
 }
 
 contract GhoTokenPoolRemote_setRateLimitAdmin is GhoTokenPoolRemoteSetup {
-  error OnlyCallableByOwner();
-
   function testSetRateLimitAdminSuccess() public {
     assertEq(address(0), s_pool.getRateLimitAdmin());
     changePrank(AAVE_DAO);
@@ -502,8 +500,6 @@ contract GhoTokenPoolRemote_setRateLimitAdmin is GhoTokenPoolRemoteSetup {
 }
 
 contract GhoTokenPoolRemote_directMint is GhoTokenPoolRemoteSetup {
-  error OnlyCallableByOwner();
-
   function testDirectMintAdminSuccess(uint256 amount) public {
     amount = bound(amount, 1, type(uint128).max); // current pool capacity
     // function expected to match bucket level of old facilitator which burns
@@ -533,8 +529,6 @@ contract GhoTokenPoolRemote_directMint is GhoTokenPoolRemoteSetup {
 }
 
 contract GhoTokenPoolRemote_directBurn is GhoTokenPoolRemoteSetup {
-  error OnlyCallableByOwner();
-
   function testFuzzDirectBurnSuccess(uint256 amount) public {
     amount = bound(amount, 1, type(uint128).max); // bound to bucket capacity
     // prank previously bridged supply
