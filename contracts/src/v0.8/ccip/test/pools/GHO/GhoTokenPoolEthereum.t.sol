@@ -492,6 +492,7 @@ contract GhoTokenPoolEthereum_transferLiquidity is GhoTokenPoolEthereumSetup {
   uint256 internal s_amount = 100_000_000e18;
 
   error BridgeLimitExceeded(uint256 limit);
+  error InsufficientLiquidity();
 
   function setUp() public virtual override {
     super.setUp();
@@ -529,6 +530,16 @@ contract GhoTokenPoolEthereum_transferLiquidity is GhoTokenPoolEthereumSetup {
     vm.expectRevert(OnlyCallableByOwner.selector);
 
     s_ghoTokenPool.transferLiquidity(address(1), 1);
+  }
+
+  function testFuzz_RevertsTransferLiquidityExcess(uint256 amount) public {
+    uint256 existingLiquidity = s_token.balanceOf(address(s_oldLockReleaseTokenPool));
+    amount = bound(amount, existingLiquidity + 1, type(uint256).max);
+
+    s_oldLockReleaseTokenPool.setRebalancer(address(s_ghoTokenPool));
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    s_ghoTokenPool.transferLiquidity(address(s_oldLockReleaseTokenPool), amount);
   }
 }
 
