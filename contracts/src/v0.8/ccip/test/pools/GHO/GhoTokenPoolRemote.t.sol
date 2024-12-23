@@ -501,10 +501,10 @@ contract GhoTokenPoolRemote_setRateLimitAdmin is GhoTokenPoolRemoteSetup {
   }
 }
 
-contract GhoTokenPoolRemote_mintAndTransferLiquidity is GhoTokenPoolRemoteSetup {
+contract GhoTokenPoolRemote_directMint is GhoTokenPoolRemoteSetup {
   error OnlyCallableByOwner();
 
-  function testMintAndTransferLiquidityAdminSuccess(uint256 amount) public {
+  function testDirectMintAdminSuccess(uint256 amount) public {
     amount = bound(amount, 1, type(uint128).max); // current pool capacity
     // function expected to match bucket level of old facilitator which burns
     // provided tokens to reduce its capacity
@@ -514,7 +514,7 @@ contract GhoTokenPoolRemote_mintAndTransferLiquidity is GhoTokenPoolRemoteSetup 
     changePrank(AAVE_DAO);
     vm.expectEmit(address(s_burnMintERC677));
     emit Transfer(address(0), oldFacilitator, amount);
-    s_pool.mintAndTransferLiquidity(oldFacilitator, amount);
+    s_pool.directMint(oldFacilitator, amount);
 
     assertEq(s_burnMintERC677.balanceOf(oldFacilitator), amount);
     assertEq(s_burnMintERC677.balanceOf(address(s_pool)), 0);
@@ -524,10 +524,34 @@ contract GhoTokenPoolRemote_mintAndTransferLiquidity is GhoTokenPoolRemoteSetup 
 
   // Reverts
 
-  function testMintAndTransferLiquidityAdminReverts() public {
+  function testDirectMintAdminReverts() public {
     vm.startPrank(STRANGER);
 
     vm.expectRevert(OnlyCallableByOwner.selector);
-    s_pool.mintAndTransferLiquidity(makeAddr("oldFacilitator"), 13e7);
+    s_pool.directMint(makeAddr("oldFacilitator"), 13e7);
+  }
+}
+
+contract GhoTokenPoolRemote_directBurn is GhoTokenPoolRemoteSetup {
+  error OnlyCallableByOwner();
+
+  function testFuzzDirectBurnSuccess(uint256 amount) public {
+    amount = bound(amount, 1, type(uint128).max); // bound to bucket capacity
+    // prank previously bridged supply
+    vm.startPrank(address(s_pool));
+    s_burnMintERC677.mint(address(s_pool), amount);
+
+    vm.startPrank(AAVE_DAO);
+    s_pool.directBurn(amount);
+
+    assertEq(s_burnMintERC677.balanceOf(address(s_pool)), 0);
+    assertEq(GhoToken(address(s_burnMintERC677)).getFacilitator(address(s_pool)).bucketLevel, 0);
+  }
+
+  function testDirectBurnAdminReverts() public {
+    vm.startPrank(STRANGER);
+
+    vm.expectRevert(OnlyCallableByOwner.selector);
+    s_pool.directBurn(13e7);
   }
 }

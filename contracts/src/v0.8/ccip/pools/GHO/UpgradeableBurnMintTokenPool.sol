@@ -16,7 +16,9 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// @dev Contract adaptations:
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
-/// - Add GHO-Specific onlyOwner `transferLiquidity` which mints liquidity to the old pool
+/// - Add GHO-Specific onlyOwner `directMint` which mints liquidity to the old pool &
+/// increases facilitator level.
+/// - Add GHO-Specific onlyOwner `directBurn` which burns liquidity & reduces facilitator level.
 /// - Remove i_token decimal check in UpgradeableTokenPool constructor
 
 /// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
@@ -42,16 +44,31 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
     if (i_allowlistEnabled) _applyAllowListUpdates(new address[](0), allowlist);
   }
 
-  /// @notice This function allows the owner to mint `amount` tokens on behalf of the pool and transfer them to `to`.
-  /// This is GHO-Specific and is called to match the facilitator level of the new pool with the old pool such that
-  /// it can burn the bridged supply once the old pool is deprecated. The old pool is then expected to burn `amount` of tokens
-  /// so that it can be removed as a facilitator on GHO.
-  /// @dev This is only called while offboarding an old token pool (or facilitator) in favor of this pool.
-  /// @param to The address to which the minted tokens will be transferred. This needs to be the old token pool,
+  /// @notice This function allows the owner to mint `amount` tokens on behalf of the pool
+  /// and transfer them to `to`. This is GHO-Specific and is called to match the facilitator
+  /// level of the new pool with the old pool such that it can burn the bridged supply once
+  /// the old pool is deprecated. The old pool is then expected to burn `amount` of tokens
+  /// so that it can be removed as a facilitator on GHO (ideally using `directBurn`).
+  /// @dev This is only called while offboarding an old token pool (or facilitator) in favor
+  /// of this pool.
+  /// @param to The address to which the minted tokens will be transferred. This needs to
+  /// be the old token pool,
   /// or the facilitator being offboarded.
   /// @param amount The amount of tokens to mint and transfer to old pool.
-  function mintAndTransferLiquidity(address to, uint256 amount) external onlyOwner {
+  function directMint(address to, uint256 amount) external onlyOwner {
     IBurnMintERC20(address(i_token)).mint(to, amount);
+  }
+
+  /// @notice This function allows the owner to burn `amount` of the pool's token. This is
+  /// expected to be called while migrating facilitators by offboarding this facilitator in
+  /// favor of a new token pool.
+  /// @dev New token pool should mint and transfer liquidity to this pool (since this pool
+  /// does not hold tokens at any point in time) which can be burnt and hence will reduce
+  /// the facilitator bucket level on GHO. The naming convention is inspired from  that in
+  /// LockRelease type token pools for the sake of consistency.
+  /// @param amount The amount of tokens to burn.
+  function directBurn(uint256 amount) external onlyOwner {
+    _burn(amount);
   }
 
   /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract
