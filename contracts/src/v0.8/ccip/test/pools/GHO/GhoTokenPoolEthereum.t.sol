@@ -507,9 +507,8 @@ contract GhoTokenPoolEthereum_transferLiquidity is GhoTokenPoolEthereumSetup {
       )
     );
     deal(address(s_token), address(s_oldLockReleaseTokenPool), s_amount);
-    // write to currentBridged
-    vm.store(address(s_oldLockReleaseTokenPool), bytes32(uint256(12)), bytes32(s_amount));
     changePrank(AAVE_DAO);
+    s_oldLockReleaseTokenPool.setCurrentBridgedAmount(s_amount);
   }
 
   function testFuzz_TransferLiquidity(uint256 amount) public {
