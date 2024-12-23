@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..ad4241b2e2 100644
+index 9af0f22f4c..b830f7524c 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,28 +1,102 @@
+@@ -1,28 +1,103 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
@@ -28,6 +28,7 @@ index 9af0f22f4c..ad4241b2e2 100644
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Inclusion of rate limit admin who may configure rate limits in addition to owner
++/// - Add GHO-Specific onlyOwner `directBurn` which burns liquidity & reduces facilitator level.
 +/// - Modifications from inherited contract (see contract for more details):
 +///   - UpgradeableTokenPool: Modify `onlyOnRamp` & `onlyOffRamp` modifier to accept transactions from ProxyPool
 +contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {

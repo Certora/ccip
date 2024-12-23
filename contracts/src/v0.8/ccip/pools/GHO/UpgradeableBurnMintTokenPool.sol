@@ -17,6 +17,7 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Inclusion of rate limit admin who may configure rate limits in addition to owner
+/// - Add GHO-Specific onlyOwner `directBurn` which burns liquidity & reduces facilitator level.
 /// - Modifications from inherited contract (see contract for more details):
 ///   - UpgradeableTokenPool: Modify `onlyOnRamp` & `onlyOffRamp` modifier to accept transactions from ProxyPool
 contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
