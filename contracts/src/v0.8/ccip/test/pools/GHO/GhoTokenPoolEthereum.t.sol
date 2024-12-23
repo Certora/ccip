@@ -251,20 +251,13 @@ contract GhoTokenPoolEthereum_releaseOrMint is GhoTokenPoolEthereumSetup {
   }
 
   function testChainNotAllowedReverts() public {
-    vm.startPrank(s_allowedOnRamp);
-    s_ghoTokenPool.lockOrBurn(
-      Pool.LockOrBurnInV1({
-        receiver: bytes(""),
-        remoteChainSelector: DEST_CHAIN_SELECTOR,
-        originalSender: STRANGER,
-        amount: 1e5,
-        localToken: address(s_token)
-      })
-    );
+    uint256 amount = 1e5;
+    vm.startPrank(AAVE_DAO);
+    // increase bridge amount which can later be offRamped
+    s_ghoTokenPool.setCurrentBridgedAmount(amount);
 
     uint64[] memory remoteChainSelectorsToRemove = new uint64[](1);
     remoteChainSelectorsToRemove[0] = SOURCE_CHAIN_SELECTOR;
-    changePrank(AAVE_DAO);
     vm.expectEmit(address(s_ghoTokenPool));
     emit ChainRemoved(SOURCE_CHAIN_SELECTOR);
     s_ghoTokenPool.applyChainUpdates(remoteChainSelectorsToRemove, new UpgradeableTokenPool.ChainUpdate[](0));
@@ -275,7 +268,7 @@ contract GhoTokenPoolEthereum_releaseOrMint is GhoTokenPoolEthereumSetup {
     s_ghoTokenPool.releaseOrMint(
       Pool.ReleaseOrMintInV1({
         originalSender: bytes(""),
-        amount: 1e5,
+        amount: amount,
         remoteChainSelector: SOURCE_CHAIN_SELECTOR,
         receiver: OWNER,
         localToken: address(s_token),
