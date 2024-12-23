@@ -21,8 +21,9 @@ import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
-/// - Permissioned bridgedAmount setter to facilitate liquidity migration
-/// - Remove i_token decimal check in UpgradeableTokenPool constructor
+/// - Addition of authorized function to update amount of tokens that are currently bridged
+/// - Modifications from inherited contract (see contract for more details):
+///    - UpgradeableTokenPool: Remove i_token decimal check in constructor
 
 /// @dev Token pool used for tokens on their native chain. This uses a lock and release mechanism.
 /// Because of lock/unlock requiring liquidity, this pool contract also has function to add and remove
