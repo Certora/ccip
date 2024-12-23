@@ -23,6 +23,7 @@ import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v5.0.2/contra
 /// chains.
 /// @dev Contract adaptations:
 ///  - Remove i_token decimal check in constructor.
+///  - Add storage `__gap` for future upgrades.
 /// Example:
 /// Assume there is a token with 6 decimals on chain A and 3 decimals on chain B.
 /// - 1.234567 tokens are burned on chain A.

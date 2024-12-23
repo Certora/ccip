@@ -24,6 +24,7 @@ import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 /// - Addition of authorized function to update amount of tokens that are currently bridged
 /// - Modifications from inherited contract (see contract for more details):
 ///    - UpgradeableTokenPool: Remove i_token decimal check in constructor
+///    - Add storage `__gap` for future upgrades.
 
 /// @dev Token pool used for tokens on their native chain. This uses a lock and release mechanism.
 /// Because of lock/unlock requiring liquidity, this pool contract also has function to add and remove
