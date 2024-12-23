@@ -90,8 +90,7 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
   /// favor of a new token pool.
   /// @dev New token pool should mint and transfer liquidity to this pool (since this pool
   /// does not hold tokens at any point in time) which can be burnt and hence will reduce
-  /// the facilitator bucket level on GHO. The naming convention is inspired from  that in
-  /// LockRelease type token pools for the sake of consistency.
+  /// the facilitator bucket level on GHO.
   /// @param amount The amount of tokens to burn.
   function directBurn(uint256 amount) external onlyOwner {
     _burn(amount);
