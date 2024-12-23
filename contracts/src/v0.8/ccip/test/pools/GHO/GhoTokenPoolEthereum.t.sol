@@ -544,10 +544,6 @@ contract GhoTokenPoolEthereum_transferLiquidity is GhoTokenPoolEthereumSetup {
 }
 
 contract GhoTokenPoolEthereum_setCurrentBridgedAmount is GhoTokenPoolEthereumSetup {
-  function setUp() public override {
-    super.setUp();
-  }
-
   function test_UnauthorizedReverts() public {
     changePrank(STRANGER);
     vm.expectRevert(OnlyCallableByOwner.selector);
