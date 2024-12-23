@@ -399,21 +399,21 @@ contract GhoTokenPoolRemote_proxyPool is GhoTokenPoolRemoteSetup {
   }
 }
 
-contract GhoTokenPoolRemote_burnLiquidity is GhoTokenPoolRemoteSetup {
-  function testBurnLiquidityOnlyOwner() public {
+contract GhoTokenPoolRemote_directBurn is GhoTokenPoolRemoteSetup {
+  function testDirectBurnOnlyOwner() public {
     vm.startPrank(STRANGER);
     vm.expectRevert("Only callable by owner");
-    s_pool.burnLiquidity(13e7);
+    s_pool.directBurn(13e7);
   }
 
-  function testFuzzBurnLiquiditySuccess(uint256 amount) public {
+  function testFuzzDirectBurnSuccess(uint256 amount) public {
     amount = bound(amount, 1, type(uint128).max); // bound to bucket capacity
     // prank previously bridged supply
     vm.startPrank(address(s_pool));
     s_burnMintERC677.mint(address(s_pool), amount);
 
     vm.startPrank(AAVE_DAO);
-    s_pool.burnLiquidity(amount);
+    s_pool.directBurn(amount);
 
     assertEq(s_burnMintERC677.balanceOf(address(s_pool)), 0);
     assertEq(GhoToken(address(s_burnMintERC677)).getFacilitator(address(s_pool)).bucketLevel, 0);

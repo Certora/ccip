@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..c35a66e7dc 100644
+index 9af0f22f4c..ad4241b2e2 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
 @@ -1,28 +1,102 @@
@@ -114,7 +114,7 @@ index 9af0f22f4c..c35a66e7dc 100644
 +  /// the facilitator bucket level on GHO. The naming convention is inspired from  that in
 +  /// LockRelease type token pools for the sake of consistency.
 +  /// @param amount The amount of tokens to burn.
-+  function burnLiquidity(uint256 amount) external onlyOwner {
++  function directBurn(uint256 amount) external onlyOwner {
 +    _burn(amount);
 +  }
 +

@@ -92,7 +92,7 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
   /// the facilitator bucket level on GHO. The naming convention is inspired from  that in
   /// LockRelease type token pools for the sake of consistency.
   /// @param amount The amount of tokens to burn.
-  function burnLiquidity(uint256 amount) external onlyOwner {
+  function directBurn(uint256 amount) external onlyOwner {
     _burn(amount);
   }
 
