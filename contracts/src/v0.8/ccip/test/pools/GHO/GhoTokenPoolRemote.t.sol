@@ -503,15 +503,16 @@ contract GhoTokenPoolRemote_directMint is GhoTokenPoolRemoteSetup {
   function testFuzzDirectMintSuccess(uint256 amount) public {
     amount = bound(amount, 1, type(uint128).max); // current pool capacity
 
-    address oldFacilitator = makeAddr("oldFacilitator");
+    address oldTokePool = makeAddr("oldTokePool");
 
     changePrank(AAVE_DAO);
     vm.expectEmit(address(s_burnMintERC677));
-    emit Transfer(address(0), oldFacilitator, amount);
-    s_pool.directMint(oldFacilitator, amount);
+    emit Transfer(address(0), oldTokePool, amount);
+    s_pool.directMint(oldTokePool, amount);
 
-    assertEq(s_burnMintERC677.balanceOf(oldFacilitator), amount);
+    assertEq(s_burnMintERC677.balanceOf(oldTokePool), amount);
     assertEq(s_burnMintERC677.balanceOf(address(s_pool)), 0);
+    assertEq(GhoToken(address(s_burnMintERC677)).getFacilitator(address(s_pool)).bucketLevel, amount);
   }
 
   // Reverts
