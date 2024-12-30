@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index cd3096f4ef..699b76ec37 100644
+index cd3096f4ef..8c0965a67f 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-@@ -1,26 +1,28 @@
+@@ -1,26 +1,29 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
@@ -42,10 +42,11 @@ index cd3096f4ef..699b76ec37 100644
 -///
 +/// @dev Contract adaptations:
 +///  - Remove i_token decimal check in constructor.
++///  - Add storage `__gap` for future upgrades.
  /// Example:
  /// Assume there is a token with 6 decimals on chain A and 3 decimals on chain B.
  /// - 1.234567 tokens are burned on chain A.
-@@ -29,7 +31,7 @@ import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v5.0.2/contracts
+@@ -29,7 +32,7 @@ import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v5.0.2/contracts
  /// 0.000567 tokens.
  /// In the case of a burnMint pool on chain A, these funds are burned in the pool on chain A.
  /// In the case of a lockRelease pool on chain A, these funds accumulate in the pool on chain A.
@@ -54,7 +55,7 @@ index cd3096f4ef..699b76ec37 100644
    using EnumerableSet for EnumerableSet.Bytes32Set;
    using EnumerableSet for EnumerableSet.AddressSet;
    using EnumerableSet for EnumerableSet.UintSet;
-@@ -117,34 +119,18 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -117,34 +120,18 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @dev Can be address(0) if none is configured.
    address internal s_rateLimitAdmin;
 
@@ -93,7 +94,7 @@ index cd3096f4ef..699b76ec37 100644
      return token == address(i_token);
    }
 
-@@ -168,9 +154,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -168,9 +155,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
 
    /// @notice Sets the pool's Router
    /// @param newRouter The new Router
@@ -104,7 +105,7 @@ index cd3096f4ef..699b76ec37 100644
      if (newRouter == address(0)) revert ZeroAddressNotAllowed();
      address oldRouter = address(s_router);
      s_router = IRouter(newRouter);
-@@ -179,11 +163,11 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -179,11 +164,11 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    }
 
    /// @notice Signals which version of the pool interface is supported
@@ -121,7 +122,7 @@ index cd3096f4ef..699b76ec37 100644
    }
 
    // ================================================================
-@@ -199,9 +183,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -199,9 +184,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @param lockOrBurnIn The input to validate.
    /// @dev This function should always be called before executing a lock or burn. Not doing so would allow
    /// for various exploits.
@@ -132,7 +133,7 @@ index cd3096f4ef..699b76ec37 100644
      if (!isSupportedToken(lockOrBurnIn.localToken)) revert InvalidToken(lockOrBurnIn.localToken);
      if (IRMN(i_rmnProxy).isCursed(bytes16(uint128(lockOrBurnIn.remoteChainSelector)))) revert CursedByRMN();
      _checkAllowList(lockOrBurnIn.originalSender);
-@@ -219,9 +201,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -219,9 +202,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @param releaseOrMintIn The input to validate.
    /// @dev This function should always be called before executing a release or mint. Not doing so would allow
    /// for various exploits.
@@ -143,7 +144,7 @@ index cd3096f4ef..699b76ec37 100644
      if (!isSupportedToken(releaseOrMintIn.localToken)) revert InvalidToken(releaseOrMintIn.localToken);
      if (IRMN(i_rmnProxy).isCursed(bytes16(uint128(releaseOrMintIn.remoteChainSelector)))) revert CursedByRMN();
      _onlyOffRamp(releaseOrMintIn.remoteChainSelector);
-@@ -247,9 +227,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -247,9 +228,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
      return abi.encode(i_tokenDecimals);
    }
 
@@ -154,7 +155,7 @@ index cd3096f4ef..699b76ec37 100644
      // Fallback to the local token decimals if the source pool data is empty. This allows for backwards compatibility.
      if (sourcePoolData.length == 0) {
        return i_tokenDecimals;
-@@ -304,9 +282,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -304,9 +283,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @notice Gets the pool address on the remote chain.
    /// @param remoteChainSelector Remote chain selector.
    /// @dev To support non-evm chains, this value is encoded into bytes
@@ -165,7 +166,7 @@ index cd3096f4ef..699b76ec37 100644
      bytes32[] memory remotePoolHashes = s_remoteChainConfigs[remoteChainSelector].remotePools.values();
 
      bytes[] memory remotePools = new bytes[](remotePoolHashes.length);
-@@ -327,9 +303,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -327,9 +304,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @notice Gets the token address on the remote chain.
    /// @param remoteChainSelector Remote chain selector.
    /// @dev To support non-evm chains, this value is encoded into bytes
@@ -176,7 +177,7 @@ index cd3096f4ef..699b76ec37 100644
      return s_remoteChainConfigs[remoteChainSelector].remoteTokenAddress;
    }
 
-@@ -358,9 +332,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -358,9 +333,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    }
 
    /// @inheritdoc IPoolV1
@@ -187,7 +188,7 @@ index cd3096f4ef..699b76ec37 100644
      return s_remoteChainSelectors.contains(remoteChainSelector);
    }
 
-@@ -379,8 +351,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -379,8 +352,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @notice Sets the permissions for a list of chains selectors. Actual senders for these chains
    /// need to be allowed on the Router to interact with this pool.
    /// @param remoteChainSelectorsToRemove A list of chain selectors to remove.
@@ -197,7 +198,7 @@ index cd3096f4ef..699b76ec37 100644
    /// @dev Only callable by the owner
    function applyChainUpdates(
      uint64[] calldata remoteChainSelectorsToRemove,
-@@ -495,9 +466,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -495,9 +467,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    /// @notice Sets the rate limiter admin address.
    /// @dev Only callable by the owner.
    /// @param rateLimitAdmin The new rate limiter admin address.
@@ -208,7 +209,7 @@ index cd3096f4ef..699b76ec37 100644
      s_rateLimitAdmin = rateLimitAdmin;
      emit RateLimitAdminSet(rateLimitAdmin);
    }
-@@ -566,18 +535,14 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -566,18 +536,14 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
 
    /// @notice Checks whether remote chain selector is configured on this contract, and if the msg.sender
    /// is a permissioned onRamp for the given chain on the Router.
@@ -229,7 +230,7 @@ index cd3096f4ef..699b76ec37 100644
      if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
      if (!s_router.isOffRamp(remoteChainSelector, msg.sender)) revert CallerIsNotARampOnRouter(msg.sender);
    }
-@@ -586,9 +551,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -586,9 +552,7 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
    // │                          Allowlist                           │
    // ================================================================
 
@@ -240,11 +241,14 @@ index cd3096f4ef..699b76ec37 100644
      if (i_allowlistEnabled) {
        if (!s_allowlist.contains(sender)) {
          revert SenderNotAllowed(sender);
-@@ -635,4 +598,6 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
+@@ -635,4 +599,8 @@ abstract contract TokenPool is IPoolV1, Ownable2StepMsgSender {
        }
      }
    }
 +
++  /// @dev This empty reserved space is put in place to allow future versions to add new
++  /// variables without shifting down storage in the inheritance chain.
 +  uint256[42] private __gap;
  }
+
 ```
