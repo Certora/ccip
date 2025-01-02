@@ -46,7 +46,7 @@ contract Ownable2Step is IOwnable {
 
   /// @notice validate, transfer ownership, and emit relevant events
   /// @param to The address to which ownership will be transferred.
-  function _transferOwnership(address to) private {
+  function _transferOwnership(address to) internal {
     if (to == msg.sender) {
       revert CannotTransferToSelf();
     }
