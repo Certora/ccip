@@ -122,7 +122,6 @@ rule only_bridgeLimitAdmin_or_owner_can_call_setBridgeLimit(env e) {
   assert e.msg.sender==getBridgeLimitAdmin(e) || e.msg.sender==owner();
 }
 
-
 /* ==============================================================================
    rule: only_owner_can_call_setCurrentBridgedAmount
    ============================================================================*/
