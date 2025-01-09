@@ -3,10 +3,10 @@ name: Certora Prover Workflow
 on:
   push:
     branches:
-      - main
+      - ccip_gho
   pull_request:
     branches:
-      - main
+      - ccip_gho
   workflow_dispatch:
 
 jobs:
