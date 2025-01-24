@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  verify:
+  compile:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +18,29 @@ jobs:
           submodules: recursive
       - uses: actions/setup-node@v4
       - run: npm install
-      - uses: Certora/certora-run-action@main
+      - uses: Certora/certora-run-action@v1
+        with:
+          configurations: |-
+            certora/confs/ccip.conf
+          solc-versions: 0.8.24
+          solc-remove-version-prefix: "0."
+          cli-version: 7.21.1
+          job-name: "CCIP Compiled Rules"
+          certora-key: ${{ secrets.CERTORAKEY }}
+          compilation-steps-only: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+      - run: npm install
+      - uses: Certora/certora-run-action@v1
         with:
           configurations: |-
             certora/confs/ccip.conf
